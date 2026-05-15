@@ -92,8 +92,8 @@ public class DeviceServiceTest {
         repository.deleteAll();
         
         Device s1 = new Device(); s1.setName("S1"); s1.setCategory("Cat1"); s1.setSerial("abc-111"); s1.setStock(1); s1.setActive(true); repository.save(s1);
-        Device s2 = new Device(); s2.setName("S2"); s2.setCategory("Cat2"); s1.setSerial("abc-222"); s1.setStock(2);s2.setActive(true); repository.save(s2);
-        Device s3 = new Device(); s3.setName("S3"); s3.setCategory("Cat3"); s1.setSerial("abc-333"); s1.setStock(0);s3.setActive(false); repository.save(s3);
+        Device s2 = new Device(); s2.setName("S2"); s2.setCategory("Cat2"); s2.setSerial("abc-222"); s2.setStock(2);s2.setActive(true); repository.save(s2);
+        Device s3 = new Device(); s3.setName("S3"); s3.setCategory("Cat3"); s3.setSerial("abc-333"); s3.setStock(0);s3.setActive(false); repository.save(s3);
 
         DeviceStatsResponse stats = service.getStats();
 
