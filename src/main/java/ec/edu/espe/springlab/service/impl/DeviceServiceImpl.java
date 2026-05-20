@@ -25,7 +25,10 @@ public class DeviceServiceImpl implements DeviceService {
 
     @Override
     public DeviceResponse create(DeviceCreateRequest request) {
-        if (repo.existsBySerial(request.getSerial())) {
+        if (request.getStock() != null && request.getStock() < 0) {
+            throw new IllegalArgumentException("El stock no puede ser negativo");
+        }
+        if (repo.existsBySerialAndDeletedFalse(request.getSerial())) {
             throw new ConflictException("El serial ya esta registrado");
         }
         Device d = new Device();
@@ -34,38 +37,58 @@ public class DeviceServiceImpl implements DeviceService {
         d.setSerial(request.getSerial());
         d.setStock(request.getStock());
         d.setActive(true);
+        d.setDeleted(false);
         Device saved = repo.save(d);
         return toResponse(saved);
     }
 
     @Override
     public DeviceResponse getById(Long id) {
-        Device d = repo.findById(id).orElseThrow(() -> new
-                NotFoundException("No esta registrado"));
+        Device d = repo.findByIdAndDeletedFalse(id).orElseThrow(() -> new
+                NotFoundException("Dispositivo no encontrado o eliminado"));
         return toResponse(d);
     }
 
 
     @Override
     public DeviceResponse deactivate(Long id) {
-        Device s = repo.findById(id).orElseThrow(() -> new
-                NotFoundException("Dispositivo no asoma"));
+        Device s = repo.findByIdAndDeletedFalse(id).orElseThrow(() -> new
+                NotFoundException("Dispositivo no encontrado o eliminado"));
         s.setActive(false);
         return toResponse(repo.save(s));
     }
 
     @Override
-    public List<DeviceResponse> list(){
-        return repo.findAll().stream().map(
-                this::toResponse).toList();
+    public void delete(Long id) {
+        Device d = repo.findByIdAndDeletedFalse(id).orElseThrow(() -> new 
+                NotFoundException("Dispositivo no encontrado o ya eliminado"));
+        d.setDeleted(true);
+        repo.save(d);
+    }
 
+
+    @Override
+    public List<DeviceResponse> list(){
+        return repo.findAllByDeletedFalse().stream()
+                .map(this::toResponse).toList();
+    }
+
+    public List<DeviceResponse> searchByName(String name) {
+        return repo.findByNameContainingIgnoreCaseAndDeletedFalse(name).stream()
+                .map(this::toResponse).toList();
+    }
+
+    @Override
+    public List<DeviceResponse> getLowStock() {
+        return repo.findByStockLessThanAndDeletedFalse(5).stream()
+                .map(this::toResponse).toList();
     }
 
     @Override
     public DeviceStatsResponse getStats() {
-        long total = repo.count();
-        long active = repo.countByActiveTrue();
-        long inactive = total - active;
+        long total = repo.countByDeletedFalse();
+        long active = repo.countByActiveTrueAndDeletedFalse();
+        long inactive = repo.countByActiveFalseAndDeletedFalse();
         return new DeviceStatsResponse(total, active, inactive);
     }
 

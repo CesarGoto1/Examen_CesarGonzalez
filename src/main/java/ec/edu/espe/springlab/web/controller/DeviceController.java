@@ -35,6 +35,14 @@ public class DeviceController {
         return ResponseEntity.ok(service.getById(id));
     }
 
+    @GetMapping
+    public ResponseEntity<java.util.List<DeviceResponse>> listDevices(@RequestParam(required = false) String name){
+        if (name != null) {
+            return ResponseEntity.ok(service.searchByName(name));
+        }
+        return ResponseEntity.ok(service.list());
+    }
+
 
 
     @PatchMapping("/{id}/deactivate")
@@ -42,9 +50,20 @@ public class DeviceController {
         return ResponseEntity.ok(service.deactivate(id));
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteDevice(@PathVariable Long id){
+        service.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/stats")
     public ResponseEntity<DeviceStatsResponse> getStats(){
         return ResponseEntity.ok(service.getStats());
+    }
+
+    @GetMapping("/low-stock")
+    public ResponseEntity<java.util.List<DeviceResponse>> getLowStock(){
+        return ResponseEntity.ok(service.getLowStock());
     }
 
 }

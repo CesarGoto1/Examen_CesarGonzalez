@@ -14,8 +14,9 @@ public class Device {
     @Column(nullable = false, length = 120)
     private String category;
     private Boolean active = true;
+    private Boolean deleted = false;
 
-    @Column(nullable = false, length = 120)
+    @Column(nullable = false)
     private int stock;
 
     public int getStock() {
@@ -59,6 +60,14 @@ public class Device {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public Boolean getDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(Boolean deleted) {
+        this.deleted = deleted;
     }
 
     public String getCategory() {

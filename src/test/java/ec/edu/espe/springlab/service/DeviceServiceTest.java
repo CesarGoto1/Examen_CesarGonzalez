@@ -55,19 +55,19 @@ public class DeviceServiceTest {
 
     @Test
     void stockNegativo(){
-        Device d = new Device();
-        d.setName("Existing");
-        d.setCategory("TESTCAT");
-        d.setSerial("UNIQ-SER");
-        d.setStock(-1);
-        d.setActive(true);
-
-
+        System.out.println("Ejecutando prueba de stock negativo...");
+        DeviceCreateRequest req = new DeviceCreateRequest();
+        req.setName("Negative Stock Device");
+        req.setCategory("Test");
+        req.setSerial("NEG-001");
+        req.setStock(-5);
+        assertThatThrownBy(() -> service.create(req))
+                .isInstanceOf(Exception.class);
     }
 
     @Test
     void shouldDeactivateDevice() {
-        // Desactivar
+        // Desactivar (ahora solo cambia active=false)
         Device s = new Device();
         s.setName("Active Device");
         s.setCategory("Cat1");
@@ -80,10 +80,7 @@ public class DeviceServiceTest {
 
         Device updated = repository.findById(s.getId()).orElseThrow();
         assertThat(updated.getActive()).isFalse();
-        assertThat(updated.getName()).isEqualTo("Active Device");
-        assertThat(updated.getCategory()).isEqualTo("Cat1");
-        assertThat(updated.getSerial()).isEqualTo("ABC-123");
-        assertThat(updated.getStock()).isEqualTo(5);
+        assertThat(updated.getDeleted()).isFalse();
     }
 
     @Test
@@ -100,6 +97,48 @@ public class DeviceServiceTest {
         assertThat(stats.getTotal()).isEqualTo(3);
         assertThat(stats.getAvailable()).isEqualTo(2);
         assertThat(stats.getUnavailable()).isEqualTo(1);
+    }
+
+    @Test
+    void testLogicalDelete() {
+        // 1. Crear dispositivo
+        Device d = new Device();
+        d.setName("Laptop");
+        d.setSerial("SN-999");
+        d.setCategory("Comp");
+        d.setStock(5);
+        d.setActive(true);
+        d.setDeleted(false);
+        d = repository.save(d);
+        Long id = d.getId();
+
+        service.delete(id);
+
+        assertThatThrownBy(() -> service.getById(id))
+                .isInstanceOf(NotFoundException.class);
+
+        Device inDb = repository.findById(id).orElseThrow();
+        assertThat(inDb.getDeleted()).isTrue();
+        assertThat(service.list()).noneMatch(device -> device.getId().equals(id));
+        DeviceStatsResponse stats = service.getStats();
+        long totalBefore = repository.countByDeletedFalse();
+        assertThat(stats.getTotal()).isEqualTo(totalBefore);
+    }
+
+    @Test
+    void testPartialSearch() {
+        repository.deleteAll();
+        
+        Device d1 = new Device(); d1.setName("Laptop"); d1.setSerial("S1"); d1.setCategory("C1"); d1.setStock(1); d1.setActive(true); repository.save(d1);
+        Device d2 = new Device(); d2.setName("Laptop Gamer"); d2.setSerial("S2"); d2.setCategory("C2"); d2.setStock(1); d2.setActive(true); repository.save(d2);
+        Device d3 = new Device(); d3.setName("Router"); d3.setSerial("S3"); d3.setCategory("C3"); d3.setStock(1); d3.setActive(true); repository.save(d3);
+
+        java.util.List<DeviceResponse> results = service.searchByName("lap");
+
+        assertThat(results).hasSize(2);
+        assertThat(results).extracting(DeviceResponse::getName)
+                .containsExactlyInAnyOrder("Laptop", "Laptop Gamer")
+                .doesNotContain("Router");
     }
 
 

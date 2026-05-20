@@ -18,6 +18,17 @@ public interface DeviceService {
     //Cambiar el estado
     DeviceResponse deactivate(Long id);
 
+    List<DeviceResponse> searchByName(String name);
+
+    List<DeviceResponse> getLowStock();
+
+    //Eliminación lógica
+    void delete(Long id);
+
     //Obtener estadísticas
     DeviceStatsResponse getStats();
+
+
+
+
 }
